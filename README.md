@@ -17,7 +17,8 @@ docker compose up -d
 
 A aplicação ficará disponível em:
 
-**http://localhost:3011**
+- No próprio servidor: **http://localhost:3011**
+- Na rede local (substitua pelo IP do Linux): **http://192.168.0.23:3011**
 
 ### Parar o container
 
@@ -77,3 +78,71 @@ npm run dev
 ```
 
 Por padrão o servidor usa a porta **5656** quando rodado diretamente com Node.js (sem Docker).
+
+## Acesso na rede local (Linux)
+
+O `docker-compose.yml` publica a porta **3011** em todas as interfaces (`0.0.0.0`). Se `http://192.168.0.23:3011` retornar **ERR_CONNECTION_REFUSED**, execute estes passos **no servidor Linux** (onde o Docker está rodando).
+
+### 1. Container em execução e porta publicada
+
+```bash
+docker compose ps
+docker port spx-gc 3011
+ss -tlnp | grep 3011
+```
+
+Resultado esperado:
+
+- Container `spx-gc` com status **Up**
+- `0.0.0.0:3011` (ou `[::]:3011`) em **LISTEN**
+
+### 2. App responde no próprio servidor
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:3011/
+curl -s -o /dev/null -w "%{http_code}\n" http://192.168.0.23:3011/
+```
+
+Ambos devem retornar **200**. Se `127.0.0.1` funcionar e `192.168.0.23` não, o problema é firewall ou interface de rede.
+
+### 3. IP correto da máquina
+
+```bash
+ip -4 addr show
+hostname -I
+```
+
+Confirme que **192.168.0.23** é o IP do adaptador em uso (Wi‑Fi ou Ethernet). Se o IP for outro, use esse na URL.
+
+### 4. Firewall (causa mais comum no Linux)
+
+**UFW (Ubuntu/Debian):**
+
+```bash
+sudo ufw status
+sudo ufw allow 3011/tcp
+sudo ufw reload
+```
+
+**firewalld (RHEL/CentOS/Fedora):**
+
+```bash
+sudo firewall-cmd --permanent --add-port=3011/tcp
+sudo firewall-cmd --reload
+```
+
+### 5. Rebuild após alterações
+
+Se o código ou o `docker-compose.yml` foi atualizado no servidor:
+
+```bash
+docker compose up -d --build
+```
+
+### 6. Cliente na mesma rede
+
+O PC/celular que acessa deve estar na mesma rede (`192.168.0.x`) e sem VPN que isole o tráfego. Teste com ping:
+
+```bash
+ping 192.168.0.23
+```
