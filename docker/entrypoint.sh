@@ -15,7 +15,6 @@ mkdir -p \
   "${DATA_ROOT}/ASSETS/media" \
   "${DATA_ROOT}/ASSETS/scripts"
 
-# Volume antigo ou mount incorreto pode criar config.json como pasta
 if [ -d "${DATA_ROOT}/config.json" ]; then
   echo "Removing invalid ${DATA_ROOT}/config.json (was a directory)."
   rm -rf "${DATA_ROOT}/config.json"
@@ -23,11 +22,46 @@ fi
 
 create_config() {
   echo "Creating default config.json (port ${PORT})..."
-  if [ ! -f /app/docker/config.docker.json ]; then
-    echo "ERROR: /app/docker/config.docker.json missing from image. Rebuild with: docker compose build --no-cache"
-    exit 1
-  fi
-  sed "s/\"port\": 3011/\"port\": ${PORT}/" /app/docker/config.docker.json > "${DATA_ROOT}/config.json"
+  SPX_PORT="${PORT}" SPX_CONFIG_PATH="${DATA_ROOT}/config.json" node <<'NODE'
+const fs = require('fs');
+const port = parseInt(process.env.SPX_PORT || '3011', 10);
+const cfg = {
+  warning: 'Docker default config. Modifications done in the SPX UI may overwrite this file.',
+  copyright: '(c) 2020- SPX Graphics (https://spxgraphics.com)',
+  updated: new Date().toISOString(),
+  general: {
+    username: 'admin',
+    password: '',
+    hostname: '',
+    greeting: '',
+    langfile: 'portuguese.json',
+    loglevel: 'info',
+    launchBrowser: false,
+    apikey: '',
+    logfolder: '/app/LOG/',
+    dataroot: '/app/DATAROOT/',
+    templatesource: 'spx-ip-address',
+    port,
+    disableConfigUI: false,
+    disableLocalRenderer: false,
+    disableOpenFolderCommand: true,
+    disableSeveralControllersWarning: false,
+    hideRendererCursor: false,
+    resolution: 'HD',
+    preview: 'selected',
+    renderer: 'normal',
+    autoplayLocalRenderer: true,
+    recents: [],
+  },
+  casparcg: { servers: [] },
+  osc: { enable: false, port: 57121 },
+  globalExtras: {
+    customscript: '/ExtraFunctions/demoFunctions.js',
+    CustomControls: [],
+  },
+};
+fs.writeFileSync(process.env.SPX_CONFIG_PATH, JSON.stringify(cfg, null, 2));
+NODE
 }
 
 if [ ! -f "${DATA_ROOT}/config.json" ] || [ ! -s "${DATA_ROOT}/config.json" ]; then

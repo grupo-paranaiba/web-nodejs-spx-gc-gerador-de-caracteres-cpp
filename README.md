@@ -161,6 +161,7 @@ docker compose logs --tail 80 spx-gc
 
 | Sintoma nos logs | Solução |
 |------------------|---------|
+| `sed: can't read config.docker.json` | Imagem antiga — `git pull` e `docker compose build --no-cache` (entrypoint gera config via Node) |
 | `exec ... entrypoint.sh failed` | Rebuild: `docker compose up -d --build` (imagem sem conversão CRLF) |
 | `Is a directory` em `config.json` | Volume corrompido — ver abaixo |
 | `EADDRINUSE` / porta em uso | Outro processo na 3011: `ss -tlnp \| grep 3011` |

@@ -10,10 +10,11 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
 COPY . .
-COPY docker/config.docker.json docker/config.docker.json
+COPY docker/entrypoint.sh docker/entrypoint.sh
 
 RUN sed -i 's/\r$//' docker/entrypoint.sh \
-  && chmod +x docker/entrypoint.sh
+  && chmod +x docker/entrypoint.sh \
+  && test -f docker/entrypoint.sh
 
 ENV NODE_ENV=production
 EXPOSE 3011
