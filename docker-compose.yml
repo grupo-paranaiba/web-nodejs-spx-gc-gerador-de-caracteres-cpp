@@ -1,0 +1,14 @@
+services:
+  spx-gc:
+    build: .
+    container_name: spx-gc
+    restart: unless-stopped
+    ports:
+      - "3011:3011"
+    environment:
+      SPX_PORT: "3011"
+    volumes:
+      - spx_data:/spx-data
+
+volumes:
+  spx_data:

@@ -1,0 +1,13 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+.cursor
+DATAROOT
+DATAROOT_*
+LOG
+config.json
+config*.json
+!docker/config.docker.json
+*.md
+!docker
