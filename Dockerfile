@@ -10,6 +10,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
 COPY . .
+COPY docker/config.docker.json docker/config.docker.json
 
 RUN sed -i 's/\r$//' docker/entrypoint.sh \
   && chmod +x docker/entrypoint.sh

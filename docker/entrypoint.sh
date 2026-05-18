@@ -23,6 +23,10 @@ fi
 
 create_config() {
   echo "Creating default config.json (port ${PORT})..."
+  if [ ! -f /app/docker/config.docker.json ]; then
+    echo "ERROR: /app/docker/config.docker.json missing from image. Rebuild with: docker compose build --no-cache"
+    exit 1
+  fi
   sed "s/\"port\": 3011/\"port\": ${PORT}/" /app/docker/config.docker.json > "${DATA_ROOT}/config.json"
 }
 

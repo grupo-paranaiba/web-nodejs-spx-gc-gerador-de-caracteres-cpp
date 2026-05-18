@@ -7,7 +7,6 @@ DATAROOT
 DATAROOT_*
 LOG
 config.json
-config*.json
-!docker/config.docker.json
+config2.json
+config_demodataroot.json
 *.md
-!docker
