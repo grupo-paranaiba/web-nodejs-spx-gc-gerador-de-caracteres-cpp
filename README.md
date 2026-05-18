@@ -146,3 +146,54 @@ O PC/celular que acessa deve estar na mesma rede (`192.168.0.x`) e sem VPN que i
 ```bash
 ping 192.168.0.23
 ```
+
+## Container em `Restarting` e porta não publicada
+
+Se `docker compose ps` mostra **Restarting (1)** e `docker port spx-gc 3011` responde *no public port published*, o processo **está caindo antes de subir** — não é problema de IP/firewall ainda.
+
+### Ver o erro
+
+```bash
+docker compose logs --tail 80 spx-gc
+```
+
+### Causas frequentes
+
+| Sintoma nos logs | Solução |
+|------------------|---------|
+| `exec ... entrypoint.sh failed` | Rebuild: `docker compose up -d --build` (imagem sem conversão CRLF) |
+| `Is a directory` em `config.json` | Volume corrompido — ver abaixo |
+| `EADDRINUSE` / porta em uso | Outro processo na 3011: `ss -tlnp \| grep 3011` |
+| `Unexpected end of JSON input` / `CATASTROPHIC FAILURE` | `config.json` vazio ou corrompido no volume — ver abaixo |
+
+### Corrigir volume `spx_data` corrompido
+
+Às vezes `config.json` virou **pasta** no volume (mount antigo). No servidor:
+
+```bash
+docker compose down
+
+docker run --rm \
+  -v web-nodejs-spx-gc-gerador-de-caracteres-cpp_spx_data:/spx-data \
+  alpine sh -c 'ls -la /spx-data; rm -rf /spx-data/config.json'
+
+docker compose up -d --build
+docker compose logs -f spx-gc
+```
+
+O nome do volume pode variar. Liste com `docker volume ls | grep spx`.
+
+Se quiser **zerar tudo** (perde projetos e config):
+
+```bash
+docker compose down -v
+docker compose up -d --build
+```
+
+### Conferir que subiu
+
+```bash
+docker compose ps          # STATUS: Up
+docker port spx-gc 3011    # 0.0.0.0:3011 -> 3011/tcp
+curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:3011/
+```
